@@ -1,0 +1,756 @@
+<!DOCTYPE html><script type="application/json" id="cowork-artifact-meta">
+{
+  "name": "Simulador Libertad Financiera",
+  "schemaVersion": 1,
+  "description": "Simulador libertad financiera Valencia-Durán. Abre en light mode. Meta editable junto a portafolio inicial. Decimales en tablas y métricas. Proyecta hasta 2080. Curvas arrastrables por quinquenio. Escenarios guardables con nombre, persistidos en localStorage."
+}
+</script>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Libertad Financiera</title>
+<style>
+:root{
+  --bg:#090C18;--s1:#0F1526;--s2:#161D30;--s3:#1E263C;
+  --b0:rgba(255,255,255,0.07);
+  --bp:rgba(124,104,238,0.3);--bo:rgba(249,115,22,0.3);--br:rgba(239,68,68,0.3);
+  --bg-green:rgba(34,197,94,0.28);--bg-cyan:rgba(6,182,212,0.28);--bg-violet:rgba(168,85,247,0.28);
+  --t1:#F1F5F9;--t2:#94A3B8;--t3:#475569;--t4:#2D3A52;
+  --grid:rgba(255,255,255,0.04);
+  --tt-bg:#1E263C;--tt-b:rgba(124,104,238,0.4);--shadow:0 4px 20px rgba(0,0,0,0.4);
+  --purple:#7C68EE;--plite:#A395F3;--orange:#F97316;--green:#22C55E;--red:#EF4444;
+  --cyan:#06B6D4;--violet:#A855F7;
+}
+body.light{
+  --bg:#EEF2FA;--s1:#FFFFFF;--s2:#F4F7FD;--s3:#E8EEF8;
+  --b0:rgba(0,0,0,0.07);
+  --bp:rgba(124,104,238,0.18);--bo:rgba(249,115,22,0.18);--br:rgba(239,68,68,0.18);
+  --bg-green:rgba(34,197,94,0.14);--bg-cyan:rgba(6,182,212,0.14);--bg-violet:rgba(168,85,247,0.14);
+  --t1:#0F1526;--t2:#3D5070;--t3:#7A8BA8;--t4:#B0C0D6;
+  --grid:rgba(0,0,0,0.05);
+  --tt-bg:#FFFFFF;--tt-b:rgba(124,104,238,0.25);--shadow:0 4px 20px rgba(0,0,0,0.1);
+}
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+body{font-family:'Inter',-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;background:var(--bg);color:var(--t1);padding:1.25rem 1.25rem 2.5rem;font-size:13px;line-height:1.5;transition:background .25s,color .25s}
+
+/* ── HEADER ── */
+.header{display:flex;justify-content:space-between;align-items:center;margin-bottom:1.5rem;gap:12px;padding-bottom:1.25rem;border-bottom:1px solid var(--b0)}
+.header-left h1{font-size:15px;font-weight:600;color:var(--t1);margin-bottom:2px;letter-spacing:-.01em}
+.header-left .subtitle{font-size:11px;color:var(--t3)}
+.header-right{display:flex;align-items:center;gap:10px;flex-shrink:0}
+.pill-badge{display:inline-flex;align-items:center;background:rgba(124,104,238,0.12);border:1px solid var(--bp);border-radius:20px;padding:2px 10px;font-size:10px;font-weight:600;color:var(--plite);letter-spacing:.04em;white-space:nowrap}
+.uf-box{display:flex;align-items:center;gap:6px;background:var(--s2);border:1px solid var(--b0);border-radius:8px;padding:5px 10px}
+.uf-box label{font-size:10px;color:var(--t3)}
+.uf-input{width:78px;font-size:13px;font-weight:500;padding:2px 4px;text-align:right;border:none;background:transparent;color:var(--t1);outline:none}
+.theme-toggle{display:flex;align-items:center;gap:7px;background:var(--s2);border:1px solid var(--b0);border-radius:20px;padding:5px 10px;cursor:pointer;transition:all .2s;color:var(--t2);font-size:11px;font-weight:500}
+.theme-toggle:hover{border-color:var(--purple);color:var(--t1)}
+.toggle-track{width:30px;height:16px;background:var(--s3);border-radius:8px;position:relative;transition:background .2s;border:1px solid var(--b0);flex-shrink:0}
+body:not(.light) .toggle-track{background:var(--purple)}
+.toggle-thumb{position:absolute;top:2px;left:2px;width:10px;height:10px;border-radius:50%;background:#fff;transition:transform .2s}
+body:not(.light) .toggle-thumb{transform:translateX(14px)}
+
+/* ── METRICS ── */
+.metrics{display:grid;grid-template-columns:repeat(5,1fr);gap:8px;margin-bottom:1.25rem}
+.metric{background:var(--s1);border:1px solid var(--b0);border-radius:12px;padding:.75rem .875rem;text-align:center;transition:background .25s,border-color .25s}
+.metric:first-child{border-color:var(--bp)}
+.metric-label{font-size:9.5px;color:var(--t3);margin-bottom:4px;text-transform:uppercase;letter-spacing:.06em}
+.metric-value{font-size:17px;font-weight:700;color:var(--t1);letter-spacing:-.02em}
+.metric-sub{font-size:10px;color:var(--t3);margin-top:3px}
+
+/* ── SCENARIOS BAR ── */
+.scenarios-bar{display:flex;align-items:center;gap:10px;background:var(--s1);border:1px solid var(--b0);border-radius:12px;padding:.625rem 1rem;margin-bottom:.875rem;flex-wrap:wrap;transition:background .25s}
+.scen-left{display:flex;align-items:center;gap:8px;flex:1;flex-wrap:wrap;min-width:0}
+.scen-label{font-size:9.5px;font-weight:600;color:var(--t3);text-transform:uppercase;letter-spacing:.08em;white-space:nowrap}
+.save-btn{display:flex;align-items:center;gap:5px;background:transparent;border:1px solid var(--b0);border-radius:8px;padding:5px 12px;cursor:pointer;color:var(--t2);font-size:11px;font-weight:500;transition:all .2s;white-space:nowrap;flex-shrink:0}
+.save-btn:hover{border-color:var(--purple);color:var(--plite);background:rgba(124,104,238,0.08)}
+.save-dialog{display:none;flex-wrap:wrap;align-items:center;gap:8px;padding:.75rem 1rem;background:var(--s2);border:1px solid var(--b0);border-radius:12px;margin-bottom:.875rem}
+.save-dialog.visible{display:flex}
+.save-dialog input{flex:1;min-width:160px;font-size:12px;padding:6px 10px;border:1px solid var(--b0);border-radius:8px;background:var(--s3);color:var(--t1);outline:none}
+.save-dialog input:focus{border-color:var(--purple)}
+.btn-ok{background:var(--purple);color:#fff;border:none;border-radius:8px;padding:6px 14px;font-size:11px;font-weight:600;cursor:pointer}
+.btn-ok:hover{opacity:.85}
+.btn-x{background:transparent;color:var(--t3);border:1px solid var(--b0);border-radius:8px;padding:6px 10px;font-size:11px;cursor:pointer}
+.scenarios-chips{display:flex;flex-wrap:wrap;gap:6px}
+.chip{display:inline-flex;align-items:center;gap:5px;background:var(--s3);border:1px solid var(--b0);border-radius:20px;padding:2px 10px 2px 11px;font-size:10.5px;font-weight:500;color:var(--t2);cursor:pointer;transition:all .15s}
+.chip:hover,.chip.active{border-color:var(--purple);color:var(--plite);background:rgba(124,104,238,0.1)}
+.chip-del{width:13px;height:13px;border-radius:50%;background:transparent;border:none;color:var(--t4);font-size:10px;cursor:pointer;display:inline-flex;align-items:center;justify-content:center;padding:0;transition:all .15s}
+.chip-del:hover{background:rgba(239,68,68,0.2);color:var(--red)}
+
+/* ── ACCORDION ── */
+.accordion{background:var(--s1);border:1px solid var(--b0);border-radius:14px;margin-bottom:.875rem;overflow:hidden;transition:background .25s}
+.acc-header{width:100%;display:flex;justify-content:space-between;align-items:center;padding:.875rem 1.25rem;background:transparent;border:none;cursor:pointer;color:var(--t1);font-size:11.5px;font-weight:600;letter-spacing:.05em;text-transform:uppercase;transition:background .15s;text-align:left}
+.acc-header:hover{background:rgba(124,104,238,0.05)}
+.acc-title{display:flex;align-items:center;gap:8px;min-width:0}
+.acc-dot{width:6px;height:6px;border-radius:50%;flex-shrink:0}
+.acc-label{white-space:nowrap}
+.acc-summary{font-size:10px;color:var(--t3);font-weight:400;text-transform:none;letter-spacing:0;margin-left:4px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.acc-chevron{color:var(--t3);transition:transform .3s;font-size:14px;flex-shrink:0;margin-left:12px}
+.accordion.open .acc-chevron{transform:rotate(180deg)}
+.acc-body{max-height:0;overflow:hidden;transition:max-height .4s cubic-bezier(.4,0,.2,1)}
+.accordion.open .acc-body{max-height:2400px}
+.acc-inner{padding:0 1.25rem 1.25rem}
+
+/* ── CONTROLS ── */
+.section-label{font-size:9.5px;font-weight:600;color:var(--purple);text-transform:uppercase;letter-spacing:.1em;margin-bottom:.75rem;display:flex;align-items:center;gap:8px}
+.section-label::after{content:'';flex:1;height:1px;background:linear-gradient(90deg,var(--bp),transparent)}
+.divider{border:none;border-top:1px solid var(--b0);margin:.875rem 0}
+.two-col{display:grid;grid-template-columns:1fr 1fr;gap:14px;align-items:end;margin-bottom:1rem}
+.field label{font-size:10px;color:var(--t3);display:block;margin-bottom:5px;text-transform:uppercase;letter-spacing:.05em}
+.pv-input{width:100%;font-size:14px;font-weight:500;padding:8px 10px;border:1px solid var(--b0);border-radius:8px;background:var(--s2);color:var(--t1);outline:none;transition:border-color .15s}
+.pv-input:focus{border-color:var(--purple)}
+.ret-row{display:flex;align-items:center;gap:8px;margin-bottom:.625rem}
+.ret-label{font-size:10px;color:var(--t2);white-space:nowrap}
+.ret-val{font-size:11px;font-weight:600;color:var(--plite);white-space:nowrap;min-width:36px;text-align:right}
+input[type=range]{flex:1;cursor:pointer;height:4px;accent-color:var(--purple);border-radius:2px;outline:none;-webkit-appearance:none;appearance:none;background:var(--s3)}
+input[type=range]::-webkit-slider-track{background:var(--s3);height:4px;border-radius:2px}
+input[type=range]::-webkit-slider-thumb{-webkit-appearance:none;width:13px;height:13px;border-radius:50%;background:var(--purple);border:2px solid var(--bg);cursor:pointer}
+
+/* ── CURVE BLOCKS ── */
+.curves-grid{display:grid;grid-template-columns:1fr 1fr 1fr;gap:10px;margin-bottom:.5rem}
+.curve-block{background:var(--s2);border:1px solid var(--b0);border-radius:10px;padding:.875rem;transition:background .25s,border-color .25s}
+.curve-block.c-etf{border-color:var(--bp)}
+.curve-block.c-rf{border-color:var(--bg-green)}
+.curve-block.c-alt{border-color:var(--bo)}
+.curve-block.c-i1{border-color:var(--bp)}
+.curve-block.c-i2{border-color:var(--bg-cyan)}
+.curve-block.c-i3{border-color:var(--bg-violet)}
+.curve-block.c-gas{border-color:var(--br)}
+.curve-name{font-size:11px;font-weight:600;margin-bottom:.5rem;display:flex;align-items:center;gap:6px;color:var(--t1)}
+.cdot{width:7px;height:7px;border-radius:50%;display:inline-block;flex-shrink:0}
+.curve-wrap{width:100%;overflow:hidden;border-radius:6px;margin-top:.5rem}
+.curve-wrap svg{display:block;width:100%;touch-action:none;user-select:none;cursor:crosshair}
+.curve-stats{display:flex;flex-wrap:wrap;gap:8px;margin-top:6px}
+.cs-item{font-size:10px;color:var(--t3)}
+.cs-val{font-weight:600;color:var(--t2)}
+.hint{font-size:10px;color:var(--t4);margin-top:8px;line-height:1.6}
+.alloc-sum{font-size:10.5px;color:var(--t3);margin-top:.75rem;padding:6px 10px;background:var(--s2);border:1px solid var(--b0);border-radius:8px;line-height:1.7}
+.svg-grid{stroke:var(--grid);stroke-width:.5}
+
+/* ── TABLES ── */
+.cf-section{margin-bottom:1.25rem}
+.cf-title{font-size:10px;font-weight:600;color:var(--t2);margin-bottom:4px;text-transform:uppercase;letter-spacing:.07em}
+.cf-hint{font-size:10px;color:var(--t4);margin-bottom:8px}
+.cf-wrap{overflow-x:auto;border:1px solid var(--b0);border-radius:12px;-webkit-overflow-scrolling:touch}
+.cf-table{border-collapse:collapse;white-space:nowrap;font-size:11px;min-width:100%}
+.cf-table th,.cf-table td{padding:5px 10px;text-align:right}
+.cf-table .rlbl{position:sticky;left:0;z-index:2;text-align:left;font-size:10px;padding:5px 12px;border-right:1px solid var(--b0);min-width:142px}
+.cf-table thead .rlbl{background:var(--s2);color:var(--t3);font-weight:500;font-size:9.5px;text-transform:uppercase;letter-spacing:.05em}
+.cf-table thead th{background:var(--s2);color:var(--t3);font-weight:400;font-size:10px}
+/* flow table */
+.cf-table.flow tbody tr td{background:var(--s1);color:var(--t2);transition:background .25s}
+.cf-table.flow tr:nth-child(1) .rlbl,.cf-table.flow tr:nth-child(2) .rlbl{background:var(--s1);color:var(--t2);font-weight:500}
+.cf-table.flow tr:nth-child(3) .rlbl{background:var(--s2);color:var(--t1);font-weight:600}
+.cf-table.flow tr:nth-child(4) .rlbl{background:var(--s2);color:var(--plite);font-weight:600}
+.cf-table.flow tr:nth-child(2) td{border-top:1px solid var(--b0)}
+.cf-table.flow tr:nth-child(3) td{background:var(--s2);font-weight:600;border-top:1px solid var(--b0)}
+.cf-table.flow tr:nth-child(4) td{background:var(--s2);font-weight:600}
+/* port table */
+.cf-table.port tbody tr td{background:var(--s1);transition:background .25s}
+.cf-table.port tr:nth-child(1) .rlbl,.cf-table.port tr:nth-child(2) .rlbl,.cf-table.port tr:nth-child(4) .rlbl{background:var(--s1);color:var(--t2);font-weight:500}
+.cf-table.port tr:nth-child(3) .rlbl{background:rgba(124,104,238,0.1);color:var(--plite);font-weight:700}
+.cf-table.port tr:nth-child(1) td{color:var(--green)}
+.cf-table.port tr:nth-child(2) td{}
+.cf-table.port tr:nth-child(3) td{background:rgba(124,104,238,0.08);font-weight:700;color:var(--plite);border-top:1px solid var(--bp)}
+.cf-table.port tr:nth-child(4) td{background:var(--s2);color:var(--t2)}
+.cf-table .pos{color:var(--green)}
+.cf-table .neg{color:var(--red)}
+
+/* ── CHART ── */
+.chart-block{margin-bottom:1.25rem}
+.chart-title{font-size:10px;font-weight:600;color:var(--t2);margin-bottom:6px;text-transform:uppercase;letter-spacing:.07em}
+.chart-legend{display:flex;gap:16px;margin-bottom:10px;font-size:11px;color:var(--t3);flex-wrap:wrap}
+.chart-legend span{display:flex;align-items:center;gap:6px}
+.chart-wrap{position:relative;width:100%;height:240px;background:var(--s1);border:1px solid var(--b0);border-radius:12px;overflow:hidden;transition:background .25s}
+#portChart{display:block;width:100%;height:240px}
+#chartTooltip{position:absolute;display:none;background:var(--tt-bg);border:1px solid var(--tt-b);border-radius:8px;padding:7px 10px;font-size:11px;pointer-events:none;box-shadow:var(--shadow);white-space:nowrap;z-index:10;line-height:1.7;color:var(--t1);transition:background .25s}
+.note{font-size:10px;color:var(--t4);margin-top:1rem;line-height:1.7}
+</style>
+</head>
+<body class="light">
+
+<!-- HEADER -->
+<div class="header">
+  <div class="header-left">
+    <h1>Libertad Financiera</h1>
+    <p class="subtitle">Horizonte 2026–2080</p>
+  </div>
+  <div class="header-right">
+    <span class="pill-badge" id="pill-target">Meta 30.000 UF</span>
+    <button class="theme-toggle" onclick="toggleTheme()">
+      <span style="font-size:12px">☀</span>
+      <div class="toggle-track"><div class="toggle-thumb"></div></div>
+      <span style="font-size:12px">🌙</span>
+    </button>
+    <div class="uf-box">
+      <label>1 UF =</label>
+      <input type="number" class="uf-input" id="n-uf" value="40000" min="20000" max="80000" step="100">
+      <label style="font-size:10px;color:var(--t3)">CLP</label>
+    </div>
+  </div>
+</div>
+
+<!-- METRICS -->
+<div class="metrics">
+  <div class="metric">
+    <div class="metric-label">Portafolio 2026</div>
+    <div class="metric-value" id="m-pv">—</div>
+    <div class="metric-sub" id="m-pv-sub">—</div>
+  </div>
+  <div class="metric">
+    <div class="metric-label">Meta</div>
+    <div class="metric-value" style="color:var(--plite)" id="m-target-val">30.000 UF</div>
+    <div class="metric-sub">libertad financiera</div>
+  </div>
+  <div class="metric">
+    <div class="metric-label">Año proyectado</div>
+    <div class="metric-value" id="m-year">—</div>
+    <div class="metric-sub" id="m-year-sub">—</div>
+  </div>
+  <div class="metric">
+    <div class="metric-label">Aporte neto 2026</div>
+    <div class="metric-value" id="m-contrib">—</div>
+    <div class="metric-sub" id="m-contrib-sub">—</div>
+  </div>
+  <div class="metric">
+    <div class="metric-label">Rentabilidad pond. 2026</div>
+    <div class="metric-value" id="m-wr">—</div>
+    <div class="metric-sub" id="m-wr-sub">—</div>
+  </div>
+</div>
+
+<!-- SCENARIOS BAR -->
+<div class="scenarios-bar">
+  <div class="scen-left">
+    <span class="scen-label">Escenarios</span>
+    <div class="scenarios-chips" id="scenarios-chips"></div>
+  </div>
+  <button class="save-btn" onclick="toggleSaveDlg(event)">💾 Guardar escenario</button>
+</div>
+<div class="save-dialog" id="save-dialog">
+  <input type="text" id="scen-name" placeholder="Ej: Conservador, Base, Optimista…" maxlength="30">
+  <button class="btn-ok" onclick="confirmSave()">Guardar</button>
+  <button class="btn-x" onclick="cancelSave()">✕</button>
+</div>
+
+<!-- ══ ACCORDION A: PORTAFOLIO ══ -->
+<div class="accordion open" id="acc-port">
+  <button class="acc-header" onclick="toggleAcc('acc-port')">
+    <div class="acc-title">
+      <span class="acc-dot" style="background:var(--purple)"></span>
+      <span class="acc-label">A · Portafolio</span>
+      <span class="acc-summary" id="sum-port"></span>
+    </div>
+    <span class="acc-chevron">▾</span>
+  </button>
+  <div class="acc-body"><div class="acc-inner">
+
+    <div class="two-col">
+      <div class="field">
+        <label for="n-pv">Portafolio inicial (UF)</label>
+        <input type="number" class="pv-input" id="n-pv" value="1000" min="0" max="999999" step="50">
+      </div>
+      <div class="field">
+        <label for="n-target">Meta de portafolio (UF)</label>
+        <input type="number" class="pv-input" id="n-target" value="25000" min="1000" max="999999" step="500">
+      </div>
+    </div>
+
+    <div class="section-label">Composición y rentabilidad — arrastra los puntos ↕</div>
+    <div class="curves-grid">
+
+      <!-- ETF/Stock -->
+      <div class="curve-block c-etf">
+        <div class="curve-name"><span class="cdot" style="background:var(--purple)"></span>ETF / Stock</div>
+        <div class="ret-row">
+          <span class="ret-label">Rentabilidad</span>
+          <input type="range" id="s-etf" min="1" max="15" step="0.5" value="7">
+          <span class="ret-val" id="l-etf">7.0%</span>
+        </div>
+        <div class="curve-wrap"><svg id="svg-etfA" viewBox="0 0 300 110"></svg></div>
+        <div class="curve-stats" id="stats-etfA"></div>
+      </div>
+
+      <!-- Renta Fija -->
+      <div class="curve-block c-rf">
+        <div class="curve-name"><span class="cdot" style="background:var(--green)"></span>Renta Fija</div>
+        <div class="ret-row">
+          <span class="ret-label">Rentabilidad</span>
+          <input type="range" id="s-rf" min="0.5" max="10" step="0.5" value="4">
+          <span class="ret-val" id="l-rf">4.0%</span>
+        </div>
+        <div class="curve-wrap"><svg id="svg-rfA" viewBox="0 0 300 110"></svg></div>
+        <div class="curve-stats" id="stats-rfA"></div>
+      </div>
+
+      <!-- Alternativas -->
+      <div class="curve-block c-alt">
+        <div class="curve-name"><span class="cdot" style="background:var(--orange)"></span>Alternativas</div>
+        <div class="ret-row">
+          <span class="ret-label">Rentabilidad</span>
+          <input type="range" id="s-alt" min="1" max="20" step="0.5" value="8">
+          <span class="ret-val" id="l-alt">8.0%</span>
+        </div>
+        <div class="curve-wrap"><svg id="svg-altA" viewBox="0 0 300 110"></svg></div>
+        <div class="curve-stats" id="stats-altA"></div>
+      </div>
+
+    </div>
+    <div class="alloc-sum" id="alloc-sum">—</div>
+    <p class="hint">Eje Y = % del portafolio total · El modelo normaliza automáticamente si la suma ≠ 100%</p>
+
+  </div></div>
+</div>
+
+<!-- ══ ACCORDION B: INGRESOS ══ -->
+<div class="accordion open" id="acc-ing">
+  <button class="acc-header" onclick="toggleAcc('acc-ing')">
+    <div class="acc-title">
+      <span class="acc-dot" style="background:var(--cyan)"></span>
+      <span class="acc-label">B · Ingresos</span>
+      <span class="acc-summary" id="sum-ing"></span>
+    </div>
+    <span class="acc-chevron">▾</span>
+  </button>
+  <div class="acc-body"><div class="acc-inner">
+
+    <div class="section-label">Ingresos (UF/mes) — arrastra los puntos ↕</div>
+    <div class="curves-grid">
+      <div class="curve-block c-i1">
+        <div class="curve-name"><span class="cdot" style="background:var(--purple)"></span>Ingreso 1</div>
+        <div class="curve-wrap"><svg id="svg-ing1" viewBox="0 0 300 110"></svg></div>
+        <div class="curve-stats" id="stats-ing1"></div>
+      </div>
+      <div class="curve-block c-i2">
+        <div class="curve-name"><span class="cdot" style="background:var(--cyan)"></span>Ingreso 2</div>
+        <div class="curve-wrap"><svg id="svg-ing2" viewBox="0 0 300 110"></svg></div>
+        <div class="curve-stats" id="stats-ing2"></div>
+      </div>
+      <div class="curve-block c-i3">
+        <div class="curve-name"><span class="cdot" style="background:var(--violet)"></span>Ingreso 3</div>
+        <div class="curve-wrap"><svg id="svg-ing3" viewBox="0 0 300 110"></svg></div>
+        <div class="curve-stats" id="stats-ing3"></div>
+      </div>
+    </div>
+    <p class="hint">Puntos de control cada 5 años: 2026 → 2056 · Lleva a cero para modelar retiro</p>
+
+  </div></div>
+</div>
+
+<!-- ══ ACCORDION C: GASTOS ══ -->
+<div class="accordion" id="acc-gas">
+  <button class="acc-header" onclick="toggleAcc('acc-gas')">
+    <div class="acc-title">
+      <span class="acc-dot" style="background:var(--red)"></span>
+      <span class="acc-label">C · Gastos</span>
+      <span class="acc-summary" id="sum-gas"></span>
+    </div>
+    <span class="acc-chevron">▾</span>
+  </button>
+  <div class="acc-body"><div class="acc-inner">
+
+    <div class="section-label">Gastos del hogar (UF/mes) — arrastra los puntos ↕</div>
+    <div style="max-width:370px">
+      <div class="curve-block c-gas">
+        <div class="curve-name"><span class="cdot" style="background:var(--red)"></span>Gastos</div>
+        <div class="curve-wrap"><svg id="svg-gastos" viewBox="0 0 300 110"></svg></div>
+        <div class="curve-stats" id="stats-gastos"></div>
+      </div>
+    </div>
+    <p class="hint">Puntos de control cada 5 años: 2026 → 2056</p>
+
+  </div></div>
+</div>
+
+<!-- CASH FLOW TABLE -->
+<div class="cf-section">
+  <div class="cf-title">Flujo de caja mensual (UF/mes)</div>
+  <div class="cf-hint">Valores interpolados · scroll horizontal</div>
+  <div class="cf-wrap">
+    <table class="cf-table flow" id="cfTable">
+      <thead><tr><th class="rlbl">UF/mes</th></tr></thead>
+      <tbody>
+        <tr><td class="rlbl">Ingresos (I1+I2+I3)</td></tr>
+        <tr><td class="rlbl">Gastos</td></tr>
+        <tr><td class="rlbl">Inversión neta</td></tr>
+        <tr><td class="rlbl">% inversión / ingresos</td></tr>
+      </tbody>
+    </table>
+  </div>
+</div>
+
+<!-- PORTFOLIO TABLE -->
+<div class="cf-section">
+  <div class="cf-title">Movimiento del portafolio (UF anuales)</div>
+  <div class="cf-hint">Valores anuales totales · scroll horizontal</div>
+  <div class="cf-wrap">
+    <table class="cf-table port" id="portTable">
+      <thead><tr><th class="rlbl">UF/año</th></tr></thead>
+      <tbody>
+        <tr><td class="rlbl">Ganancia rentabilidad</td></tr>
+        <tr><td class="rlbl">Aporte / Retiro</td></tr>
+        <tr><td class="rlbl">Portafolio final</td></tr>
+        <tr><td class="rlbl">% Rentabilidad pond.</td></tr>
+      </tbody>
+    </table>
+  </div>
+</div>
+
+<!-- CHART -->
+<div class="chart-block">
+  <div class="chart-title">Proyección del portafolio (UF)</div>
+  <div class="chart-legend">
+    <span><span style="width:18px;height:2px;background:var(--purple);display:inline-block;border-radius:1px"></span>Portafolio</span>
+    <span id="chart-target-legend"><span style="width:18px;height:0;display:inline-block;border-top:2px dashed var(--orange)"></span>Meta 30.000 UF</span>
+  </div>
+  <div class="chart-wrap">
+    <svg id="portChart"></svg>
+    <div id="chartTooltip"></div>
+  </div>
+</div>
+
+<p class="note">Valores en UF reales. Portafolio = port_ant × (1 + ret_pond) + aporte_anual. Retorno ponderado = Σ(alloc_i × ret_i) / Σ(alloc_i).</p>
+
+<script>
+// ── Constants ──────────────────────────────────────────────────────────
+const Y0=2026, Y1=2080;
+const CTRL_YEARS=[2026,2031,2036,2041,2046,2051,2056];
+const N_PTS=CTRL_YEARS.length;
+
+const CVW=300,CVH=110,CPL=32,CPR=8,CPT=12,CPB=24;
+const CPLOT_W=CVW-CPL-CPR, CPLOT_H=CVH-CPT-CPB;
+const CXS=CTRL_YEARS.map((_,i)=>CPL+i*CPLOT_W/(N_PTS-1));
+const CY_BOT=CPT+CPLOT_H;
+
+const MAX_ALLOC=100, MAX_INC=400, MAX_GAS=500;
+const ALLOC_GRID=[0,25,50,75,100];
+
+// Defaults
+const DEF_ETF=[60,60,60,60,60,60,60];
+const DEF_RF =[10,10,10,10,10,10,10];
+const DEF_ALT=[30,30,30,30,30,30,30];
+const DEF_I1 =[50,50,50,50,50,50,50];
+const DEF_I2 =[50,50,50,50,50,50,50];
+const DEF_I3 =[0,0,0,0,0,0,0];
+const DEF_GAS=[70,70,70,70,70,70,70];
+
+const LS_KEY='lf_scenarios_v2';
+let isDark=false;
+
+// ── Helpers ───────────────────────────────────────────────────────────
+function getTarget(){return parseFloat(document.getElementById('n-target').value)||30000;}
+function ufRate(){return parseFloat(document.getElementById('n-uf').value)||40000;}
+function clpM(uf){const m=Math.abs(uf)*ufRate()/1e6,s=uf<0?'-':'';return s+(m>=10?'$'+Math.round(m)+'M':'$'+m.toFixed(1)+'M');}
+function fmt2(v){return v.toLocaleString('es-CL',{minimumFractionDigits:2,maximumFractionDigits:2});}
+function cv(n){return getComputedStyle(document.body).getPropertyValue(n).trim();}
+function toggleAcc(id){document.getElementById(id).classList.toggle('open');}
+function toggleTheme(){
+  isDark=!isDark;
+  document.body.classList.toggle('light',!isDark);
+  if(lastPorts.length)drawChart(lastPorts,lastN);
+  Object.values(editors).forEach(e=>{e._bs();e._rd();});
+}
+function interp(vals,yr){
+  if(yr<=CTRL_YEARS[0])return vals[0];
+  if(yr>=CTRL_YEARS[N_PTS-1])return vals[N_PTS-1];
+  for(let i=0;i<N_PTS-1;i++){
+    if(yr>=CTRL_YEARS[i]&&yr<CTRL_YEARS[i+1]){
+      const t=(yr-CTRL_YEARS[i])/(CTRL_YEARS[i+1]-CTRL_YEARS[i]);
+      return vals[i]+(vals[i+1]-vals[i])*t;
+    }
+  }
+  return vals[N_PTS-1];
+}
+
+// ── Curve Editor ──────────────────────────────────────────────────────
+class CurveEditor{
+  constructor(svgId,dv,maxVal,color,statsId,onChange,gridVals=null){
+    this.el=document.getElementById(svgId);
+    this.vals=[...dv];this.maxVal=maxVal;this.color=color;
+    this.statsEl=document.getElementById(statsId);
+    this.onChange=onChange;this.dragging=null;
+    this._gv=gridVals||[0,100,200,300,400].filter(v=>v<=maxVal).concat(maxVal>400?[500]:[]);
+    this._bs();this._rd();this._bind();
+  }
+  yOf(v){return CPT+(1-Math.max(0,Math.min(this.maxVal,v))/this.maxVal)*CPLOT_H;}
+  vOfY(sy){return Math.max(0,Math.min(this.maxVal,(1-(sy-CPT)/CPLOT_H)*this.maxVal));}
+  svgPos(e){const r=this.el.getBoundingClientRect(),s=e.touches?e.touches[0]:e;return{x:(s.clientX-r.left)*CVW/r.width,y:(s.clientY-r.top)*CVH/r.height};}
+  nearestIdx(sx){let b=0,md=Infinity;CXS.forEach((x,i)=>{const d=Math.abs(sx-x);if(d<md){md=d;b=i;}});return b;}
+  _bs(){
+    let h='';
+    this._gv.forEach(v=>{
+      const y=this.yOf(v);
+      h+=`<line class="svg-grid" x1="${CPL}" y1="${y}" x2="${CVW-CPR}" y2="${y}"/>`;
+      const lbl=this.maxVal<=100?v+'%':v;
+      h+=`<text x="${CPL-3}" y="${y+3.5}" font-size="7.5" style="fill:var(--t4)" text-anchor="end">${lbl}</text>`;
+    });
+    CTRL_YEARS.forEach((yr,i)=>{h+=`<text x="${CXS[i]}" y="${CVH-4}" font-size="7.5" style="fill:var(--t4)" text-anchor="middle">${yr}</text>`;});
+    h+=`<path id="a-${this.el.id}" fill="${this.color}1A" stroke="none" d=""/>`;
+    h+=`<polyline id="l-${this.el.id}" points="" fill="none" stroke="${this.color}" stroke-width="2" stroke-linejoin="round"/>`;
+    h+=`<g id="p-${this.el.id}"></g>`;
+    this.el.innerHTML=h;
+    this.aEl=document.getElementById(`a-${this.el.id}`);
+    this.lEl=document.getElementById(`l-${this.el.id}`);
+    this.pEl=document.getElementById(`p-${this.el.id}`);
+  }
+  _rd(){
+    const ys=this.vals.map(v=>this.yOf(v));
+    this.aEl.setAttribute('d',`M ${CXS.map((x,i)=>x+','+ys[i]).join(' L ')} L ${CXS[N_PTS-1]},${CY_BOT} L ${CXS[0]},${CY_BOT} Z`);
+    this.lEl.setAttribute('points',CXS.map((x,i)=>`${x},${ys[i]}`).join(' '));
+    let ph='';
+    CXS.forEach((x,i)=>{
+      const y=ys[i],r=this.dragging===i?7.5:5.5;
+      ph+=`<circle cx="${x}" cy="${y}" r="${r}" fill="${this.color}" stroke="var(--bg)" stroke-width="1.5"/>`;
+      const v=Math.round(this.vals[i]),ly=y<CPT+16?y+13:y-8;
+      const lbl=this.maxVal<=100?v+'%':v;
+      ph+=`<text x="${x}" y="${ly}" font-size="8" fill="${this.color}" text-anchor="middle" font-weight="700">${lbl}</text>`;
+    });
+    this.pEl.innerHTML=ph;
+    const v0=Math.round(this.vals[0]),suffix=this.maxVal<=100?'%':' UF';
+    let st=`<span class="cs-item">2026: <span class="cs-val">${v0}${suffix}</span></span>`;
+    if(this.maxVal>100){
+      const peak=Math.max(...this.vals),py=CTRL_YEARS[this.vals.indexOf(Math.max(...this.vals))];
+      st+=`<span class="cs-item">Pico: <span class="cs-val">${Math.round(peak)} UF en ${py}</span></span>`;
+    } else {
+      const last=Math.round(this.vals[N_PTS-1]);
+      st+=`<span class="cs-item">2056: <span class="cs-val">${last}%</span></span>`;
+    }
+    this.statsEl.innerHTML=st;
+  }
+  _bind(){
+    this.el.addEventListener('mousedown',e=>{this.dragging=this.nearestIdx(this.svgPos(e).x);this._mv(e);e.preventDefault();});
+    this.el.addEventListener('touchstart',e=>{this.dragging=this.nearestIdx(this.svgPos(e).x);this._mv(e);e.preventDefault();},{passive:false});
+    window.addEventListener('mousemove',e=>this._mv(e));
+    window.addEventListener('touchmove',e=>this._mv(e),{passive:false});
+    window.addEventListener('mouseup',()=>{if(this.dragging!==null){this.dragging=null;this._rd();}});
+    window.addEventListener('touchend',()=>{if(this.dragging!==null){this.dragging=null;this._rd();}});
+  }
+  _mv(e){if(this.dragging===null)return;this.vals[this.dragging]=Math.round(this.vOfY(this.svgPos(e).y));this._rd();this.onChange();if(e.cancelable)e.preventDefault();}
+  setVals(v){this.vals=[...v];this._rd();}
+  getVals(){return this.vals;}
+}
+
+// ── Instantiate editors ───────────────────────────────────────────────
+const editors={};
+editors.etfA =new CurveEditor('svg-etfA', DEF_ETF, MAX_ALLOC,'#7C68EE','stats-etfA', update,ALLOC_GRID);
+editors.rfA  =new CurveEditor('svg-rfA',  DEF_RF,  MAX_ALLOC,'#22C55E','stats-rfA',  update,ALLOC_GRID);
+editors.altA =new CurveEditor('svg-altA', DEF_ALT, MAX_ALLOC,'#F97316','stats-altA', update,ALLOC_GRID);
+editors.ing1 =new CurveEditor('svg-ing1', DEF_I1,  MAX_INC,  '#7C68EE','stats-ing1', update);
+editors.ing2 =new CurveEditor('svg-ing2', DEF_I2,  MAX_INC,  '#06B6D4','stats-ing2', update);
+editors.ing3 =new CurveEditor('svg-ing3', DEF_I3,  MAX_INC,  '#A855F7','stats-ing3', update);
+editors.gastos=new CurveEditor('svg-gastos',DEF_GAS,MAX_GAS, '#EF4444','stats-gastos',update);
+
+// ── Scenarios ─────────────────────────────────────────────────────────
+let scenarios=[],activeScenario=null;
+function persist(){try{localStorage.setItem(LS_KEY,JSON.stringify(scenarios));}catch(e){}}
+function loadStored(){try{const r=localStorage.getItem(LS_KEY);if(r)scenarios=JSON.parse(r);}catch(e){scenarios=[];}renderScenarios();}
+function toggleSaveDlg(e){e.stopPropagation();const d=document.getElementById('save-dialog');d.classList.toggle('visible');if(d.classList.contains('visible')){const i=document.getElementById('scen-name');i.value='';i.focus();}}
+function cancelSave(){document.getElementById('save-dialog').classList.remove('visible');}
+function confirmSave(){
+  const name=document.getElementById('scen-name').value.trim();if(!name)return;
+  scenarios.push({id:Date.now(),name,
+    pv0:parseFloat(document.getElementById('n-pv').value)||0,
+    target:getTarget(),
+    etfRet:parseFloat(document.getElementById('s-etf').value),
+    rfRet:parseFloat(document.getElementById('s-rf').value),
+    altRet:parseFloat(document.getElementById('s-alt').value),
+    etfA:[...editors.etfA.getVals()],rfA:[...editors.rfA.getVals()],altA:[...editors.altA.getVals()],
+    i1:[...editors.ing1.getVals()],i2:[...editors.ing2.getVals()],i3:[...editors.ing3.getVals()],
+    gas:[...editors.gastos.getVals()]
+  });
+  persist();cancelSave();renderScenarios();
+}
+function loadScenario(id){
+  const s=scenarios.find(x=>x.id===id);if(!s)return;
+  activeScenario=id;
+  document.getElementById('n-pv').value=s.pv0;
+  document.getElementById('n-target').value=s.target;
+  document.getElementById('s-etf').value=s.etfRet;
+  document.getElementById('s-rf').value=s.rfRet;
+  document.getElementById('s-alt').value=s.altRet;
+  editors.etfA.setVals(s.etfA);editors.rfA.setVals(s.rfA);editors.altA.setVals(s.altA);
+  editors.ing1.setVals(s.i1);editors.ing2.setVals(s.i2);editors.ing3.setVals(s.i3);
+  editors.gastos.setVals(s.gas);
+  renderScenarios();update();
+}
+function delScenario(id,e){e.stopPropagation();scenarios=scenarios.filter(x=>x.id!==id);if(activeScenario===id)activeScenario=null;persist();renderScenarios();}
+function renderScenarios(){
+  const chips=document.getElementById('scenarios-chips');
+  chips.innerHTML=scenarios.map(s=>`
+    <div class="chip${activeScenario===s.id?' active':''}" onclick="loadScenario(${s.id})">
+      ${s.name}<button class="chip-del" onclick="delScenario(${s.id},event)">✕</button>
+    </div>`).join('');
+}
+
+// ── Model ─────────────────────────────────────────────────────────────
+function weightedRet(yr,etfA,rfA,altA,etfR,rfR,altR){
+  const a=interp(etfA,yr),b=interp(rfA,yr),c=interp(altA,yr),tot=a+b+c;
+  if(tot===0)return 0;
+  return(a*etfR+b*rfR+c*altR)/tot;
+}
+
+function runModel(pv0,etfA,rfA,altA,etfR,rfR,altR,i1V,i2V,i3V,gV){
+  const target=getTarget(),N=Y1-Y0+1;
+  const rows={inc:[],g:[],inv:[],pct:[],retGain:[],aporte:[],portFin:[],ret:[]};
+  const ports=[];let port=pv0,hitYear=null;
+  for(let i=0;i<N;i++){
+    const yr=Y0+i;
+    const ret=weightedRet(yr,etfA,rfA,altA,etfR,rfR,altR);
+    const i1=interp(i1V,yr),i2=interp(i2V,yr),i3=interp(i3V,yr);
+    const inc=i1+i2+i3,gas=interp(gV,yr);
+    const inv=inc-gas,pct=inc>0?inv/inc*100:0;
+    const gain=port*ret,ap=inv*12;
+    port=Math.max(0,port+gain+ap);
+    rows.inc.push(inc);rows.g.push(gas);rows.inv.push(inv);rows.pct.push(pct);
+    rows.retGain.push(gain);rows.aporte.push(ap);rows.portFin.push(port);rows.ret.push(ret*100);
+    ports.push(port);
+    if(port>=target&&!hitYear)hitYear=yr;
+  }
+  return{rows,ports,hitYear,N};
+}
+
+// ── Chart ─────────────────────────────────────────────────────────────
+const CH=240,CPad={l:58,r:14,t:16,b:28};
+let lastPorts=[],lastN=0;
+function drawChart(ports,N){
+  lastPorts=ports;lastN=N;
+  const target=getTarget(),svg=document.getElementById('portChart');
+  const W=svg.clientWidth||svg.parentElement.clientWidth||500;
+  const pw=W-CPad.l-CPad.r,ph=CH-CPad.t-CPad.b,yBot=CPad.t+ph;
+  const maxVal=Math.max(target*1.08,Math.max(...ports)*1.05);
+  const maxY=Math.ceil(maxVal/5000)*5000;
+  const xOf=i=>CPad.l+(i/(N-1))*pw;
+  const yOf=v=>CPad.t+(1-Math.min(v,maxY)/maxY)*ph;
+  const gridC=cv('--grid'),txtC=cv('--t3'),bgC=cv('--bg');
+  const step=maxY<=30000?5000:maxY<=60000?10000:20000;
+  let gH='',xL='';
+  for(let v=0;v<=maxY;v+=step){
+    const y=yOf(v);
+    gH+=`<line x1="${CPad.l}" y1="${y}" x2="${W-CPad.r}" y2="${y}" stroke="${gridC}" stroke-width="0.5"/>`;
+    gH+=`<text x="${CPad.l-5}" y="${y+3.5}" font-size="9" fill="${txtC}" text-anchor="end">${v>=1000?(v/1000)+'K':v}</text>`;
+  }
+  for(let i=0;i<N;i++){const yr=Y0+i;if(yr%5===0)xL+=`<text x="${xOf(i)}" y="${yBot+14}" font-size="9" fill="${txtC}" text-anchor="middle">${yr}</text>`;}
+  const gid='pg'+Math.random().toString(36).slice(2);
+  const gDef=`<defs><linearGradient id="${gid}" x1="0" y1="0" x2="0" y2="1"><stop offset="0%" stop-color="#7C68EE" stop-opacity="${isDark?0.28:0.18}"/><stop offset="100%" stop-color="#7C68EE" stop-opacity="0.02"/></linearGradient></defs>`;
+  const ptStr=ports.map((v,i)=>`${xOf(i)},${yOf(v)}`).join(' ');
+  const aD=`M ${ports.map((v,i)=>`${xOf(i)},${yOf(v)}`).join(' L ')} L ${xOf(N-1)},${yBot} L ${xOf(0)},${yBot} Z`;
+  const ty=yOf(target);
+  svg.setAttribute('width',W);svg.setAttribute('height',CH);
+  svg.innerHTML=`${gDef}${gH}${xL}
+    <path fill="url(#${gid})" stroke="none" d="${aD}"/>
+    <polyline fill="none" stroke="#7C68EE" stroke-width="2.5" stroke-linejoin="round" points="${ptStr}"/>
+    <line x1="${CPad.l}" y1="${ty}" x2="${W-CPad.r}" y2="${ty}" stroke="#F97316" stroke-width="1.5" stroke-dasharray="6,4"/>
+    <line id="hLine" x1="0" y1="${CPad.t}" x2="0" y2="${yBot}" stroke="${isDark?'rgba(255,255,255,0.1)':'rgba(0,0,0,0.1)'}" stroke-width="1" display="none"/>
+    <circle id="hDot" r="4.5" fill="#7C68EE" stroke="${bgC}" stroke-width="2" display="none"/>
+    <rect id="cOv" x="${CPad.l}" y="${CPad.t}" width="${pw}" height="${ph}" fill="transparent" style="cursor:crosshair"/>`;
+  const ov=document.getElementById('cOv'),hl=document.getElementById('hLine'),hd=document.getElementById('hDot'),tt=document.getElementById('chartTooltip'),wrap=svg.parentElement;
+  ov.addEventListener('mousemove',e=>{
+    const r=svg.getBoundingClientRect(),mx=e.clientX-r.left;
+    const idx=Math.max(0,Math.min(N-1,Math.round((mx-CPad.l)/pw*(N-1))));
+    const pv=ports[idx],cx=xOf(idx),cy=yOf(pv);
+    hl.setAttribute('x1',cx);hl.setAttribute('x2',cx);hl.setAttribute('display','block');
+    hd.setAttribute('cx',cx);hd.setAttribute('cy',cy);hd.setAttribute('display','block');
+    const check=pv>=getTarget()?`<span style="color:#22C55E;font-weight:700"> ✓</span>`:'';
+    tt.innerHTML=`<span style="color:var(--t3);font-size:10px">${Y0+idx}</span><br><span style="font-weight:700;font-size:13px">${fmt2(pv)} UF</span>${check}<br><span style="color:var(--t3)">${clpM(pv)}</span>`;
+    tt.style.display='block';
+    const wr=wrap.getBoundingClientRect();let tx=e.clientX-wr.left+12,ty2=e.clientY-wr.top-55;
+    if(tx+165>wr.width)tx-=178;if(ty2<4)ty2=4;
+    tt.style.left=tx+'px';tt.style.top=ty2+'px';
+  });
+  ov.addEventListener('mouseleave',()=>{hl.setAttribute('display','none');hd.setAttribute('display','none');tt.style.display='none';});
+}
+window.addEventListener('resize',()=>{if(lastPorts.length)drawChart(lastPorts,lastN);});
+
+// ── Update ────────────────────────────────────────────────────────────
+function update(){
+  const pv0=parseFloat(document.getElementById('n-pv').value)||0;
+  const target=getTarget();
+  const etfR=parseFloat(document.getElementById('s-etf').value)/100;
+  const rfR =parseFloat(document.getElementById('s-rf').value)/100;
+  const altR=parseFloat(document.getElementById('s-alt').value)/100;
+
+  document.getElementById('l-etf').textContent=(etfR*100).toFixed(1)+'%';
+  document.getElementById('l-rf').textContent=(rfR*100).toFixed(1)+'%';
+  document.getElementById('l-alt').textContent=(altR*100).toFixed(1)+'%';
+
+  const etfA=editors.etfA.getVals(),rfA=editors.rfA.getVals(),altA=editors.altA.getVals();
+  const i1V=editors.ing1.getVals(),i2V=editors.ing2.getVals(),i3V=editors.ing3.getVals();
+  const gV=editors.gastos.getVals();
+
+  // Alloc sum indicator
+  const e0=etfA[0],r0=rfA[0],a0=altA[0],tot=e0+r0+a0;
+  const sumOk=Math.abs(tot-100)<1;
+  const sumClose=Math.abs(tot-100)<5;
+  const sc=sumOk?'var(--green)':sumClose?'var(--orange)':'var(--red)';
+  document.getElementById('alloc-sum').innerHTML=
+    `<b>ETF</b> ${e0}% &nbsp;·&nbsp; <b>RF</b> ${r0}% &nbsp;·&nbsp; <b>Alt</b> ${a0}% &nbsp;·&nbsp; Total <span style="color:${sc};font-weight:700">${tot}%</span>${sumOk?' ✓':tot!==100?' ← normalizado automáticamente':''}`;
+
+  // Target pill
+  const tFmt=target.toLocaleString('es-CL');
+  document.getElementById('pill-target').textContent='Meta '+tFmt+' UF';
+  document.getElementById('m-target-val').textContent=tFmt+' UF';
+  document.getElementById('chart-target-legend').innerHTML=
+    `<span style="width:18px;height:0;display:inline-block;border-top:2px dashed var(--orange)"></span>Meta ${tFmt} UF`;
+
+  const res=runModel(pv0,etfA,rfA,altA,etfR,rfR,altR,i1V,i2V,i3V,gV);
+
+  // Metrics
+  document.getElementById('m-pv').textContent=fmt2(pv0)+' UF';
+  document.getElementById('m-pv-sub').textContent=clpM(pv0);
+  const myr=document.getElementById('m-year'),mys=document.getElementById('m-year-sub');
+  if(res.hitYear){myr.textContent=res.hitYear;myr.style.color='var(--plite)';mys.textContent=(res.hitYear-Y0)+' años';}
+  else{myr.textContent='>2080';myr.style.color='var(--red)';mys.textContent='fuera del horizonte';}
+  const inc0=i1V[0]+i2V[0]+i3V[0],g0=gV[0],contrib=inc0-g0,pct0=inc0>0?contrib/inc0*100:0;
+  document.getElementById('m-contrib').textContent=fmt2(contrib)+' UF';
+  document.getElementById('m-contrib-sub').textContent=clpM(contrib)+(pct0>=0?' · '+pct0.toFixed(1)+'% ahorro':'');
+  const wr0=weightedRet(Y0,etfA,rfA,altA,etfR,rfR,altR);
+  document.getElementById('m-wr').textContent=(wr0*100).toFixed(2)+'%';
+  document.getElementById('m-wr-sub').textContent=`ETF ${(etfR*100).toFixed(1)}% · RF ${(rfR*100).toFixed(1)}% · Alt ${(altR*100).toFixed(1)}%`;
+
+  // Accordion summaries
+  document.getElementById('sum-port').textContent=`${fmt2(pv0)} UF · Meta ${tFmt} · ${(wr0*100).toFixed(1)}% pond.`;
+  document.getElementById('sum-ing').textContent=`I1 ${i1V[0]} · I2 ${i2V[0]} · I3 ${i3V[0]} UF/mes`;
+  document.getElementById('sum-gas').textContent=`${gV[0]} UF/mes`;
+
+  // CF table
+  let cfH='<th class="rlbl">UF/mes</th>';
+  let iH='<td class="rlbl">Ingresos (I1+I2+I3)</td>',gH='<td class="rlbl">Gastos</td>';
+  let nH='<td class="rlbl">Inversión neta</td>',pH='<td class="rlbl">% inversión / ingresos</td>';
+  for(let i=0;i<res.N;i++){
+    const inv=res.rows.inv[i],pct=res.rows.pct[i];
+    const pc=pct>=32.5?'var(--green)':pct>=25?'var(--orange)':'var(--red)';
+    cfH+=`<th>${Y0+i}</th>`;
+    iH+=`<td>${res.rows.inc[i].toFixed(2)}</td>`;
+    gH+=`<td>${res.rows.g[i].toFixed(2)}</td>`;
+    nH+=`<td class="${inv>=0?'pos':'neg'}">${inv>=0?'+':''}${inv.toFixed(2)}</td>`;
+    pH+=`<td style="color:${pc}">${pct.toFixed(2)}%</td>`;
+  }
+  document.getElementById('cfTable').innerHTML=`<thead><tr>${cfH}</tr></thead><tbody><tr>${iH}</tr><tr>${gH}</tr><tr>${nH}</tr><tr>${pH}</tr></tbody>`;
+
+  // Portfolio table
+  let ptH='<th class="rlbl">UF/año</th>';
+  let rH='<td class="rlbl">Ganancia rentabilidad</td>',aH='<td class="rlbl">Aporte / Retiro</td>';
+  let fH='<td class="rlbl">Portafolio final</td>',wrH='<td class="rlbl">% Rentabilidad pond.</td>';
+  for(let i=0;i<res.N;i++){
+    const ap=res.rows.aporte[i];
+    ptH+=`<th>${Y0+i}</th>`;
+    rH+=`<td>${fmt2(res.rows.retGain[i])}</td>`;
+    aH+=`<td class="${ap>=0?'pos':'neg'}">${ap>=0?'+':''}${fmt2(ap)}</td>`;
+    fH+=`<td>${fmt2(res.rows.portFin[i])}</td>`;
+    wrH+=`<td>${res.rows.ret[i].toFixed(2)}%</td>`;
+  }
+  document.getElementById('portTable').innerHTML=`<thead><tr>${ptH}</tr></thead><tbody><tr>${rH}</tr><tr>${aH}</tr><tr>${fH}</tr><tr>${wrH}</tr></tbody>`;
+
+  drawChart(res.ports,res.N);
+}
+
+// ── Wire up inputs ────────────────────────────────────────────────────
+['s-etf','s-rf','s-alt'].forEach(id=>document.getElementById(id).addEventListener('input',update));
+['n-pv','n-target','n-uf'].forEach(id=>document.getElementById(id).addEventListener('change',update));
+document.getElementById('n-target').addEventListener('input',update);
+
+loadStored();
+requestAnimationFrame(update);
+</script>
+</body>
+</html>
