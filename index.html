@@ -8,7 +8,8 @@
 <html lang="es">
 <head>
 <meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1">
+<!-- SE AÑADIÓ MAXIMUM-SCALE=1.0 PARA EVITAR EL ZOOM AUTOMÁTICO EN CELULARES -->
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=0">
 <title>Libertad Financiera</title>
 <style>
 :root{
@@ -165,6 +166,50 @@ input[type=range]::-webkit-slider-thumb{-webkit-appearance:none;width:13px;heigh
 #portChart{display:block;width:100%;height:240px}
 #chartTooltip{position:absolute;display:none;background:var(--tt-bg);border:1px solid var(--tt-b);border-radius:8px;padding:7px 10px;font-size:11px;pointer-events:none;box-shadow:var(--shadow);white-space:nowrap;z-index:10;line-height:1.7;color:var(--t1);transition:background .25s}
 .note{font-size:10px;color:var(--t4);margin-top:1rem;line-height:1.7}
+
+/* ── RESPONSIVE Y MEJORAS AÑADIDAS ── */
+
+/* Regla para que Gastos tenga exactamente el ancho de 1 columna en PC sin romperse */
+@media(min-width: 851px){
+  .single-curve-grid { grid-template-columns: 1fr 2fr; gap: 10px; }
+  .single-curve-grid .curve-block { grid-column: 1 / 2; }
+}
+
+@media(max-width: 850px){
+  body { padding: 1rem 0.5rem; }
+  
+  /* Header y controles principales */
+  .header { flex-direction: column; align-items: flex-start; gap: 0.75rem; }
+  .header-right { width: 100%; justify-content: space-between; flex-wrap: wrap; }
+  .uf-box { flex: 1; justify-content: space-between; margin-left: 10px;}
+  
+  /* Métricas ajustables */
+  .metrics { grid-template-columns: 1fr 1fr; }
+  .metric:last-child { grid-column: 1 / -1; }
+  
+  /* Transformar grillas de 3 columnas a 1 columna vertical */
+  .curves-grid { grid-template-columns: 1fr; }
+  .two-col { grid-template-columns: 1fr; }
+  
+  /* Escenarios adaptados */
+  .scenarios-bar { flex-direction: column; align-items: stretch; }
+  .scen-left { width: 100%; margin-bottom: 5px;}
+  .save-btn { width: 100%; justify-content: center; padding: 10px; margin-top: 5px; }
+  
+  /* Ventana de guardar escenario responsive */
+  .save-dialog { flex-direction: column; align-items: stretch; }
+  .save-dialog input { width: 100%; margin-bottom: 8px; }
+  .btn-ok, .btn-x { padding: 10px; margin-bottom: 4px; width: 100%; text-align: center; }
+  
+  /* Optimizaciones generales del layout interno */
+  .chart-legend { gap: 10px; flex-direction: column;}
+  .acc-inner { padding: 0 0.8rem 1rem; }
+}
+
+@media(max-width: 480px){
+  .metrics { grid-template-columns: 1fr; }
+  .metric:last-child { grid-column: auto; }
+}
 </style>
 </head>
 <body class="light">
@@ -350,7 +395,8 @@ input[type=range]::-webkit-slider-thumb{-webkit-appearance:none;width:13px;heigh
   <div class="acc-body"><div class="acc-inner">
 
     <div class="section-label">Gastos del hogar (UF/mes) — arrastra los puntos ↕</div>
-    <div style="max-width:370px">
+    <!-- REEMPLAZO DEL FIX: Usamos la nueva clase en lugar de style="max-width:370px" -->
+    <div class="curves-grid single-curve-grid">
       <div class="curve-block c-gas">
         <div class="curve-name"><span class="cdot" style="background:var(--red)"></span>Gastos</div>
         <div class="curve-wrap"><svg id="svg-gastos" viewBox="0 0 300 110"></svg></div>
