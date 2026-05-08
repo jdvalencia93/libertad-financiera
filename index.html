@@ -51,14 +51,6 @@ body:not(.light) .toggle-track{background:var(--purple)}
 .toggle-thumb{position:absolute;top:2px;left:2px;width:10px;height:10px;border-radius:50%;background:#fff;transition:transform .2s}
 body:not(.light) .toggle-thumb{transform:translateX(14px)}
 
-/* ── METRICS ── */
-.metrics{display:grid;grid-template-columns:repeat(5,1fr);gap:8px;margin-bottom:1.25rem}
-.metric{background:var(--s1);border:1px solid var(--b0);border-radius:12px;padding:.75rem .875rem;text-align:center;transition:background .25s,border-color .25s}
-.metric:first-child{border-color:var(--bp)}
-.metric-label{font-size:9.5px;color:var(--t3);margin-bottom:4px;text-transform:uppercase;letter-spacing:.06em}
-.metric-value{font-size:17px;font-weight:700;color:var(--t1);letter-spacing:-.02em}
-.metric-sub{font-size:10px;color:var(--t3);margin-top:3px}
-
 /* ── SCENARIOS BAR ── */
 .scenarios-bar{display:flex;align-items:center;gap:10px;background:var(--s1);border:1px solid var(--b0);border-radius:12px;padding:.625rem 1rem;margin-bottom:.875rem;flex-wrap:wrap;transition:background .25s}
 .scen-left{display:flex;align-items:center;gap:8px;flex:1;flex-wrap:wrap;min-width:0}
@@ -149,7 +141,7 @@ input[type=range]::-webkit-slider-thumb{-webkit-appearance:none;width:13px;heigh
 /* port table */
 .cf-table.port tbody tr td{background:var(--s1);transition:background .25s}
 .cf-table.port tr:nth-child(1) .rlbl,.cf-table.port tr:nth-child(2) .rlbl,.cf-table.port tr:nth-child(4) .rlbl{background:var(--s1);color:var(--t2);font-weight:500}
-.cf-table.port tr:nth-child(3) .rlbl{background:rgba(124,104,238,0.1);color:var(--plite);font-weight:700}
+.cf-table.port tr:nth-child(3) .rlbl{background:var(--s2);color:var(--plite);font-weight:700}
 .cf-table.port tr:nth-child(1) td{color:var(--green)}
 .cf-table.port tr:nth-child(2) td{}
 .cf-table.port tr:nth-child(3) td{background:rgba(124,104,238,0.08);font-weight:700;color:var(--plite);border-top:1px solid var(--bp)}
@@ -183,10 +175,6 @@ input[type=range]::-webkit-slider-thumb{-webkit-appearance:none;width:13px;heigh
   .header-right { width: 100%; justify-content: space-between; flex-wrap: wrap; }
   .uf-box { flex: 1; justify-content: space-between; margin-left: 10px;}
   
-  /* Métricas ajustables */
-  .metrics { grid-template-columns: 1fr 1fr; }
-  .metric:last-child { grid-column: 1 / -1; }
-  
   /* Transformar grillas de 3 columnas a 1 columna vertical */
   .curves-grid { grid-template-columns: 1fr; }
   .two-col { grid-template-columns: 1fr; }
@@ -204,11 +192,6 @@ input[type=range]::-webkit-slider-thumb{-webkit-appearance:none;width:13px;heigh
   /* Optimizaciones generales del layout interno */
   .chart-legend { gap: 10px; flex-direction: column;}
   .acc-inner { padding: 0 0.8rem 1rem; }
-}
-
-@media(max-width: 480px){
-  .metrics { grid-template-columns: 1fr; }
-  .metric:last-child { grid-column: auto; }
 }
 </style>
 </head>
@@ -232,35 +215,6 @@ input[type=range]::-webkit-slider-thumb{-webkit-appearance:none;width:13px;heigh
       <input type="number" class="uf-input" id="n-uf" value="40000" min="20000" max="80000" step="100">
       <label style="font-size:10px;color:var(--t3)">CLP</label>
     </div>
-  </div>
-</div>
-
-<!-- METRICS -->
-<div class="metrics">
-  <div class="metric">
-    <div class="metric-label">Portafolio 2026</div>
-    <div class="metric-value" id="m-pv">—</div>
-    <div class="metric-sub" id="m-pv-sub">—</div>
-  </div>
-  <div class="metric">
-    <div class="metric-label">Meta</div>
-    <div class="metric-value" style="color:var(--plite)" id="m-target-val">30.000 UF</div>
-    <div class="metric-sub">libertad financiera</div>
-  </div>
-  <div class="metric">
-    <div class="metric-label">Año proyectado</div>
-    <div class="metric-value" id="m-year">—</div>
-    <div class="metric-sub" id="m-year-sub">—</div>
-  </div>
-  <div class="metric">
-    <div class="metric-label">Aporte neto 2026</div>
-    <div class="metric-value" id="m-contrib">—</div>
-    <div class="metric-sub" id="m-contrib-sub">—</div>
-  </div>
-  <div class="metric">
-    <div class="metric-label">Rentabilidad pond. 2026</div>
-    <div class="metric-value" id="m-wr">—</div>
-    <div class="metric-sub" id="m-wr-sub">—</div>
   </div>
 </div>
 
@@ -734,24 +688,11 @@ function update(){
   // Target pill
   const tFmt=target.toLocaleString('es-CL');
   document.getElementById('pill-target').textContent='Meta '+tFmt+' UF';
-  document.getElementById('m-target-val').textContent=tFmt+' UF';
   document.getElementById('chart-target-legend').innerHTML=
     `<span style="width:18px;height:0;display:inline-block;border-top:2px dashed var(--orange)"></span>Meta ${tFmt} UF`;
 
   const res=runModel(pv0,etfA,rfA,altA,etfR,rfR,altR,i1V,i2V,i3V,gV);
-
-  // Metrics
-  document.getElementById('m-pv').textContent=fmt2(pv0)+' UF';
-  document.getElementById('m-pv-sub').textContent=clpM(pv0);
-  const myr=document.getElementById('m-year'),mys=document.getElementById('m-year-sub');
-  if(res.hitYear){myr.textContent=res.hitYear;myr.style.color='var(--plite)';mys.textContent=(res.hitYear-Y0)+' años';}
-  else{myr.textContent='>2080';myr.style.color='var(--red)';mys.textContent='fuera del horizonte';}
-  const inc0=i1V[0]+i2V[0]+i3V[0],g0=gV[0],contrib=inc0-g0,pct0=inc0>0?contrib/inc0*100:0;
-  document.getElementById('m-contrib').textContent=fmt2(contrib)+' UF';
-  document.getElementById('m-contrib-sub').textContent=clpM(contrib)+(pct0>=0?' · '+pct0.toFixed(1)+'% ahorro':'');
   const wr0=weightedRet(Y0,etfA,rfA,altA,etfR,rfR,altR);
-  document.getElementById('m-wr').textContent=(wr0*100).toFixed(2)+'%';
-  document.getElementById('m-wr-sub').textContent=`ETF ${(etfR*100).toFixed(1)}% · RF ${(rfR*100).toFixed(1)}% · Alt ${(altR*100).toFixed(1)}%`;
 
   // Accordion summaries
   document.getElementById('sum-port').textContent=`${fmt2(pv0)} UF · Meta ${tFmt} · ${(wr0*100).toFixed(1)}% pond.`;
